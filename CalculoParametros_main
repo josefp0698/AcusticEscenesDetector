@@ -1,0 +1,74 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 21 20:48:50 2021
+
+@author: JOSE
+"""
+
+#####Script para automatizar el cálculo de parametros
+
+#LIBRARIES
+
+#import wavfile
+import os
+from CalculoParametros import CalculoParametros
+import threading
+from time import time
+from time import sleep
+
+#CONSTANT VARIABLES
+iFRAME_DURATION = 1.5 
+iCLASESS = 10 
+iOVERLAP = 0.5
+iNUM_HILOS = 4
+
+#CLASES 
+# % 1. Airport
+# % 2. Bus
+# % 3. Underground
+# % 4. Underground-station
+# % 5. Park
+# % 6. Public-square
+# % 7. Shopping-mall
+# % 8. Street-pedestrian
+# % 9. Street-traffic
+# % 10. Tramb
+
+## DIRECTORIES 
+INdir= "/Ruta ficheros de audio .WAV/"
+sOutDir ="/Ruta para depositar los parametros .npy/"
+
+start_time = time()
+iThread = threading.active_count()
+contenido = os.listdir(INdir)
+iNumAudios = len(contenido)
+iAudios = 0
+
+for audio in contenido : #recorrido del directorio
+    
+    print("PROCESSING FILES: "+str(audio)+"\n")
+    print("Audio nº: "+ str(iAudios)+" of "+str(iNumAudios)+"\n")
+    sIntDir = INdir + audio
+    
+ 
+    while(threading.active_count()>iThread+iNUM_HILOS):
+        sleep(1)
+    t = threading.Thread(target=CalculoParametros,args=(sIntDir, audio, sOutDir))
+    t.start()
+    a = CalculoParametros(sIntDir, audio, sOutDir)
+    print("Active threads: " +str(threading.active_count()-iThread))
+    elapsed_time = time() - start_time
+    elapsed_time = elapsed_time/3600
+    print(" Processing time : %.10f hours.\n" % elapsed_time)
+    print("Process end")
+    iAudios = iAudios + 1
+while(threading.active_count()>iThread):
+    sleep(1)
+
+elapsed_time = time() - start_time
+print("Elapsed time: %.10f seconds.\n" % elapsed_time)
+print("Process end")
+       
+       
+    
+   
