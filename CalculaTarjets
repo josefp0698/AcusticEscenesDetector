@@ -1,0 +1,52 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 31 13:20:06 2021
+
+@author: JOSE
+"""
+
+import os
+import numpy as np
+
+###Calcula la matriz de tarjets de unos parametros seleccionados. 
+
+sInDir_train = "/ruta parametros de entrada/"
+sTarjetMatrix = '/ruta a depositar tarjets/mrTargets.npy'
+iCLASES = 10
+iAudios = 0
+contador = 0
+
+contenido = os.listdir(sInDir_train)
+iNumAudios = len(contenido)
+mrTarjetsMatrix = np.zeros((iNumAudios*6,iCLASES))
+
+
+for audio in contenido :
+   iAudios = iAudios +1
+   mrData = np.load(sInDir_train+audio)
+   resto = iAudios % 100
+   if resto == 0:
+    print("Procesando... audio nª ---> "+str (iAudios))
+   for frame in mrData[:,1]:
+     if "airport" in audio:
+        mrTarjetsMatrix[contador,0] = 1
+     if "bus" in audio:
+        mrTarjetsMatrix[contador,1] = 1
+     if "metro-" in audio:
+        mrTarjetsMatrix[contador,2] = 1
+     if "station-" in audio:
+        mrTarjetsMatrix[contador,3] = 1
+     if "street_pedestrian" in audio:
+        mrTarjetsMatrix[contador,4] = 1
+     if "public_square" in audio:
+        mrTarjetsMatrix[contador,5] = 1
+     if "shopping_mall" in audio:
+        mrTarjetsMatrix[contador,6] = 1
+     if "park" in audio:
+        mrTarjetsMatrix[contador,7] = 1
+     if "street_traffic" in audio:
+        mrTarjetsMatrix[contador,8] = 1
+     if "tram" in audio:
+        mrTarjetsMatrix[contador,9] = 1
+     contador = contador + 1
+     np.save(sTarjetMatrix,mrTarjetsMatrix)
