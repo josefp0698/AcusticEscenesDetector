@@ -1,0 +1,75 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 31 11:34:03 2021
+
+@author: JOSE
+"""
+## Realiza la fase de entrenamiento de la red neuronal
+## Guarda tanto la matriz de medias y desviaciones para normalizar
+## así como la red neuronal y los pesos de la misma
+
+from keras.models import Sequential
+from keras.layers.core import Dense
+import numpy as np
+from time import time
+iEPOCS = 1500
+start_time = time()
+## Directories
+
+sNeuralNetworkDir =      '/ruta donde guardar la red/NeuralNetwork.h5'
+sNeuralNetworkDif_w = '/ruta donde guardar los pesos de la red/NeuralNetwork_w.h5'
+sData =                 '/ruta de la mariz de datos/mrData.npy'
+sTarjets =              '/ruta matriz de tarjets/mrTargets.npy'
+sVrMeans = '/ruta para guardar matriz de medias/vrMeans.npy'
+sVrStd = '/ruta para guardar matriz de desviaciones/Prueba6/vrStd.npy'
+
+
+## Load variables
+print("Cargando datos de disco...")
+mrData_m = np.load(sData)
+mrTarjetsMatrix = np.load(sTarjets)
+
+iRows, iColums = np.shape(mrData_m)
+iINPUTS = iColums
+mrData_m = np.log10(mrData_m)
+#Normalization
+print("Normalizando parametros de entrada....")
+vrMean = np.mean(mrData_m,axis = 0)
+vrStd = np.std(mrData_m,axis = 0)
+j = 0
+counter = np.zeros(iRows)
+
+for i in counter:
+   mrData_m[j,:] = np.divide((mrData_m[j,:]-vrMean),vrStd)
+   j = j + 1
+print("Guardando datos de normalización...")
+np.save(sVrMeans,vrMean)
+np.save(sVrStd,vrStd)
+del(vrMean)
+del(vrStd)
+
+##Neural Network 
+print("Parametros de entrada normalizados, creando red neuronal...")
+model = Sequential()
+model.add(Dense(10, input_dim=iINPUTS, kernel_initializer='uniform', activation='relu'))
+model.add(Dense(5, kernel_initializer='uniform', activation='sigmoid'))
+#model.add(Dense(16, kernel_initializer='uniform', activation='tanh'))
+model.add(Dense(10, kernel_initializer='uniform', activation='softmax')) 
+model.compile(loss='mean_squared_error',
+              optimizer='adam',
+              metrics=['binary_accuracy'])
+
+print("Entrenando red neuronal...")
+model.fit(mrData_m, mrTarjetsMatrix, epochs=iEPOCS)
+ ####Model evaluation   
+scores = model.evaluate(mrData_m, mrTarjetsMatrix)
+
+## Store neural network
+print("Guardando modelo...")
+model.save_weights(sNeuralNetworkDif_w)
+model.save(sNeuralNetworkDir)
+print("Modelo Guardado!")
+
+elapsed_time = time() - start_time
+print("Elapsed time: %.10f hours.\n", elapsed_time/3600)
+print("Process end")
