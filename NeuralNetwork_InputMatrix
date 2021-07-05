@@ -1,0 +1,50 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun  2 10:22:09 2021
+
+@author: JOSE
+"""
+
+import numpy as np
+import os
+from time import time
+start_time = time()
+
+####This script create the input matrix to the neuronal network
+
+INdir = "C/..../parametros_train/"
+OUdir ="/...../mrData.npy"
+
+
+contenido = os.listdir(INdir)
+iNumAudios = len(contenido)
+matrix=1
+
+contador = 0
+
+for audio in contenido:
+    mrAudio = np.load(INdir+audio)
+    mrAudio = np.float32(mrAudio)
+    iRows , iColums = np.shape(mrAudio)
+    if contador % 100 == 0:
+        print("Completado: "+str((contador/iNumAudios)*100)+" %")
+    
+   
+    if matrix == 1:
+        mrData = np.zeros([iRows*iNumAudios,iColums])
+        mrData = np.float32(mrData)
+        mrData[:iRows,:] = mrAudio
+        matrix=0
+    else:
+        initialRow = iRows*contador
+        finalRow = iRows*(contador+1)
+        mrData[(contador*iRows):(contador+1)*iRows] = mrAudio
+    contador = contador + 1   
+    
+
+np.save(OUdir,np.float32(mrData))
+elapsed_time = time() - start_time
+print("Elapsed time: %.10f seconds.\n" % elapsed_time)
+print("Process end")
+    
+
