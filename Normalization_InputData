@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun  6 11:30:27 2021
+
+@author: JOSE
+"""
+import numpy as np
+
+    # Normalize data matriz with a median vector and a desviations vector. 
+    # Inputs: 
+    #      vrMean: median vector
+    #      vrStd: desviations vector
+    #      mrData: data oto normalize. 
+    # Outputs: 
+    #      mrData: normalization data matrix. 
+    
+
+def Normalization_InputData(vrMean,vrStd,mrData):
+    
+    iRows,iColums =np.shape(mrData)
+    counter = np.zeros(iRows)
+    j = 0
+    for i in counter:
+     mrData[j,:] = np.divide((mrData[j,:]-vrMean),vrStd)
+     j = j + 1
+     
+    return mrData
+
+
