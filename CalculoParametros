@@ -1,0 +1,47 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat May  1 23:57:41 2021
+
+@author: JOSE
+"""
+from scipy.io import wavfile
+import numpy as np
+from edframe import edframe
+from hpss import hpss
+
+
+inP = 5
+inH = 5
+iFRAME_DURATION = 1.5
+
+
+####Calculo de parametros#####
+
+def CalculoParametros(sIntDir,audio,sOutDir):
+
+    iSamplingFreq, mrAudio = wavfile.read(sIntDir)
+    
+    
+    iFrameLength = round(iSamplingFreq*iFRAME_DURATION)
+    mrSignal_v = edframe(mrAudio,iFrameLength)
+    iFrame=0
+    for mrFrame in mrSignal_v[1,:]: 
+       
+       
+       mrSignalH, mrSignalP = hpss(mrSignal_v[:,iFrame],iSamplingFreq,9000,"soft",inH,inP)
+       iRows,iColums = np.shape(mrSignalH)
+       mrSignalH = np.reshape(mrSignalH,[1,iRows*iColums])
+       mrSignalP = np.reshape(mrSignalP,[1,iRows*iColums])
+       if iFrame == 0:
+           mrSignalH_m = mrSignalH
+           mrSignalP_m = mrSignalP
+       else:
+           mrSignalH_m = np.vstack([mrSignalH_m, mrSignalH])
+           mrSignalP_m = np.vstack([mrSignalP_m, mrSignalH])
+       iFrame = iFrame + 1   
+    audio=audio.replace(".wav","")
+    
+    mrSignal = np.concatenate((mrSignalH_m, mrSignalP_m), axis=1)
+    np.save(sOutDir+audio,np.float32(mrSignal))
+    
+    return mrSignal
