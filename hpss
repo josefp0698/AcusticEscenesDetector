@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jun 15 00:55:33 2021
+
+@author: JOSE
+"""
+from scipy import signal
+import numpy as np
+
+
+
+
+
+def hpss(mrSignal_frame,iSamplingFreq = 44100,iMaxFrequency = 9000, sMask="none",inH = 5, inP = 5):
+#   split the signal in two parts, mrH and mrP.
+#   
+# 
+#  Input parameters:
+#     mrSignal: Original signal, time domain.
+#     iSamplingFreq: Sampling frequency
+#     iMaxFrequency: Maximum spectrogram frequency  
+#     sMask: Filter mask 
+#     inH: nums of positions to calculate horizontal median filter
+#     inP: nums of positions to calculate vertical median filter
+#  Output parameters:
+#    mrSiganlH: mrH component 
+#    mrSiganlP: mrP component
+# 
+#  References:
+#  [1] FitzGerald,DerrmrSpectogramPo "mrH/PERCUSSIVE SEPARATION USING MEDIAN
+#  FILTERING" Audio Research Group, Dublin Institute of Technology. 
+   
+# Check input parameters. 
+ if type (inH) not in (int, float):
+    raise TypeError ("inH must be a scalar")
+ if type (inP) not in (int, float):
+    raise TypeError ("inP must be a scalar")
+ if type (iMaxFrequency) not in (int, float):
+    raise TypeError ("iMaxFrequency must be a scalar")
+ if type (iSamplingFreq) not in (int, float):
+    raise TypeError ("Frecuency must be a scalar")
+ if type (mrSignal_frame) != np.ndarray:
+    raise TypeError ("The input signal must be a vector")
+
+
+ vrFrequency, vrTime, mrSpectrogram = signal.stft(mrSignal_frame, iSamplingFreq, 
+                                                  nperseg=2205,window="hamming",nfft=2213,noverlap=0)
+ 
+ mrSpectrogram  = np.abs(mrSpectrogram) 
+ 
+
+ iDif = vrFrequency[1]-vrFrequency[0]
+ iSample = round(iMaxFrequency/iDif)
+ iSample = iSample - 1  
+ mrSpectrogram = mrSpectrogram[:iSample,:]
+ 
+ 
+ mrSpectogramPo = np.abs(mrSpectrogram)**2
+ 
+ mrH = signal.medfilt(mrSpectogramPo, [1,inH])  
+ mrP = signal.medfilt(mrSpectogramPo, [inP, 1])
+
+   
+ if sMask == "binary":
+    maskH = np.int8(mrH >= mrP)
+    maskP = np.int8(mrH < mrP)
+    mrHPart = mrSpectrogram*maskH
+    mrPPart = mrSpectrogram*maskP
+    
+ if sMask == "soft":
+       iEps = 0.00001
+       maskH = (mrH + iEps/2)/(mrH + mrP + iEps)
+       maskP = (mrP + iEps/2)/(mrH + mrP + iEps)
+       mrHPart = mrSpectrogram*maskH
+       mrPPart = mrSpectrogram*maskP
+ else: 
+       mrHPart = mrP
+       mrPPart = mrH
+       
+ return mrHPart,mrPPart
