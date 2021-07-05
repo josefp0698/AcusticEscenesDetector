@@ -1,0 +1,84 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon May 31 16:03:45 2021
+
+@author: JOSE
+"""
+
+###### Principal Programm#####
+
+###libraries###
+import numpy as np
+import sys
+from scipy.io import wavfile
+from dsp import Parameters_audio, Normalization_InputData
+from time import time
+from keras.models import load_model
+
+start_time = time()
+
+
+sScenes = ["airport      ", 
+           "bus          ", 
+           "metro-       ", 
+           "metro_station",
+           "pedestrian   ",
+           "public       ",
+           "mall         ",
+           "park         ", 
+           "traffic      ",
+           "tram         "]
+sNeuralNetworkDir = 'NeuralNetwork.h5'
+sNeuralNetworkDir_w = 'NeuralNetwork_w.h5'
+sNormalizationDataMeans = 'vrMeans.npy'
+sNormalizationDataStd = 'vrStd.npy'
+sInDirAudio = sys.argv[1]
+
+
+print("Analizando fichero...")
+if "wav" not in sInDirAudio:    
+    raise Exception("Formato de archivo no identificado")
+iFrequency, mrAudio = wavfile.read(sInDirAudio)
+print("Frecuencia de muestreo: "+str(iFrequency)+" Hz")
+if iFrequency != 44100:
+    raise Exception("Frecuencia de muestreo incorrecta debe de ser 44,1 kHz")
+print("Calculado parametros del fichero...")
+mrParameters = Parameters_audio(mrAudio,iFrequency)
+
+print("Cargando datos red neuronal...")
+## Load Neural Network 
+model=load_model(sNeuralNetworkDir)
+model.load_weights(sNeuralNetworkDir_w)
+print("Cargando modelo de disco...")
+# Compilar modelo cargado y listo para usar.
+model.compile(loss='mean_squared_error', optimizer='adam', metrics=['binary_accuracy'])
+
+print("Cargando datos de estandarizacion...")
+#Normalización parametros. 
+vrMeans = np.load(sNormalizationDataMeans)
+vrStd = np.load(sNormalizationDataStd)
+iRows,iColums =np.shape(mrParameters)
+counter = np.zeros(iRows)
+print("Estandarizando datos...")
+
+mrParameters_n = Normalization_InputData(vrMeans,vrStd,mrParameters)
+print("Realizando predicción ...")
+predictions = model.predict(mrParameters_n)
+suma = np.multiply(np.divide(np.sum(predictions,axis = 0),iRows),100)
+result = np.argmax(suma)
+
+print("-------------------------Probabilidades----------------------------")
+iC = 0
+for i in sScenes:
+    print(str(sScenes[iC])+" : " + str(np.float16((suma[iC])))+ " %")
+    iC = iC + 1
+print("-------------------------Probabilidades Agrupadas-------------------")
+print("Escena interior:    "+ str(np.float16((suma[0]+suma[3]+suma[6])))+ " %" )
+print("Escena exterior:    "+ str(np.float16((suma[4]+suma[5]+suma[7])+suma[8]))+ " %" )
+print("Escena transporte:  "+ str(np.float16((suma[1]+suma[2]+suma[9])))+ " %" )
+print("-------------------------------------------------------------------")
+print ("Decisión clasificación : "+ sScenes[result])
+
+elapsed_time = time() - start_time
+print("Tiempo de procesamiento: %.2f seconds.\n" % (elapsed_time))
+print("Proceso finalizado")
