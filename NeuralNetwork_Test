@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun  6 11:15:16 2021
+
+@author: JOSE
+"""
+#Realiza el testeo de la red neuronal, clacula los porcentajes de acierto
+# de cada de las escenas así como de cada grupo de escenas y genera una matriz
+# con todos los datos agrupados. 
+
+import numpy as np
+import os
+from keras.models import load_model
+from Normalization_InputData import Normalization_InputData
+
+sScenes = ["airport", "bus", "metro-", "metro_station","street_pedestrian","public","mall","park","traffic","tram"]
+
+##Directories
+sNeuralNetworkDir = '/ruta de la red neuronal/NeuralNetwork.h5'
+sNeuralNetworkDir_w = '/ruta de los pesos de la red neuronal/NeuralNetwork_w.h5'
+sNormalizationDataMeans = '/ruta vector de medias/vrMeans.npy'
+sNormalizationDataStd = '/ruta vector desviaciones/vrStd.npy'
+sInDir_test =  "/Ruta parametros/"
+
+matrizResultados = np.zeros((10,10))
+VectorAciertos = np.zeros(10)
+iVectorAudios = np.zeros(10)
+
+## Load variables
+vrMeans = np.load(sNormalizationDataMeans)
+vrStd = np.load(sNormalizationDataStd)
+
+## Load Neural Network 
+model=load_model(sNeuralNetworkDir)
+model.load_weights(sNeuralNetworkDir_w)
+print("Loading model from disk...")
+
+## Start local variables
+iAudiosGood = 0
+iAudios= 0
+i_m = 0
+i = 0
+    
+## Compile model 
+model.compile(loss='mean_squared_error', optimizer='adam', metrics=['binary_accuracy'])
+
+contenido = os.listdir(sInDir_test)
+iNumAudios = len(contenido)
+
+
+
+for audio in contenido: 
+    result = 11
+    print("Audio: "+str(audio))
+    iAudios = iAudios + 1
+    mrData = np.load(sInDir_test+audio)
+    mrData = np.log10(mrData)
+    mrData_n = Normalization_InputData(vrMeans,vrStd,mrData)
+    mrPredict = model.predict(mrData_n)
+    iRows,_ = np.shape(mrPredict)
+    
+    vrSum = np.sum(mrPredict,axis = 0)
+    vrSum = np.divide(vrSum,iRows)
+    vrSum = np.multiply(vrSum,100)
+    result = np.argmax(vrSum)
+    
+    
+    if sScenes[result] in audio:
+        print ("Correct! It's a: "+(sScenes[result]))
+        iAudiosGood = iAudiosGood + 1
+        VectorAciertos[result]=VectorAciertos[result]+1
+    else:
+        print ("Error! It's a: "+(sScenes[result]))
+           
+    for j in sScenes:
+            if  sScenes[i_m] in audio:
+                matrizResultados[result,i_m]=matrizResultados[result,i_m]+1
+                iVectorAudios[i_m] = iVectorAudios[i_m] + 1
+                i_m = 0
+                break
+            i_m = i_m + 1
+               
+print("-------------------------------------------------------")    
+print("-------------------------------------------------------")       
+print("Correct Audios: "+str(iAudiosGood)+" to "+ str(iAudios))
+print("Hit rate: "+str((iAudiosGood/iAudios)*100)+" %")
+print("-------------------------------------------------------")    
+print("-------------------------------------------------------") 
+sScenes = ["airport      ", 
+           "bus          ", 
+           "metro        ", 
+           "metro_station",
+           "pedestrian   ",
+           "public_square",
+           "shopping_mall",
+           "park         ",
+           "traffic      ",
+           "tram         "]
+i = 0
+for num in VectorAciertos:
+    print(sScenes[i]+" : "+str((VectorAciertos[i]/iVectorAudios[i])*100)+" %")
+    i = i + 1
+    
+    
+
+
