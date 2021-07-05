@@ -1,0 +1,43 @@
+###EDFRAME####
+
+
+import numpy as np
+
+def edframe(vrAudio,iFrameLength):
+    # Divides a signal into consecutive segments (frames) having length
+    # iFrameLength and with a certain overlap between them (indicated by rOverlap).
+    # Input parameters:
+    #   vrSignal (required input): Vector signal to be split into frames.
+    #   iFrameLength (required input): Frame length (number of samples).
+    # Output parameters:
+    #   mrSignal: Matrix with as many columns as signal frames and as many rows
+    #       as samples per frame (each frame in one column).
+    ###funcion enframe
+    
+    #Check inputs parameters
+    vrAudio_type = type(vrAudio)
+    iFrameLength_type = type(iFrameLength)
+    if vrAudio_type != np.ndarray:
+        raise TypeError("Error: audio type incorret, it must be a numpy array")
+    if iFrameLength_type != int:
+        raise TypeError("Error: The frame length must be int")
+
+    #Body
+    iRows = np.shape(vrAudio)
+    if iRows == 2:
+     vrAudio = vrAudio[1,:]
+    # if iColums == 2:
+    #  vrAudio = vrAudio[:,1]
+    
+      #FLIPPP
+   # vrAudio = np.flip(vrAudio)
+     
+    iFrames = vrAudio.size 
+    iSamples = int(iFrames/iFrameLength) 
+    iSamplesCut=iSamples*iFrameLength 
+    vrAudio_v = vrAudio[:iSamplesCut]
+    vrSignal = np.reshape(vrAudio_v,(iSamples,iFrameLength))
+    vrSignal = np.transpose(vrSignal)
+    
+    return vrSignal
+
